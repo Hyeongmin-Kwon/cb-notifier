@@ -3,30 +3,38 @@ let afterload = require('after-load');
 
 let original_path = './storage/original.html';
 let target_path = './storage/target.html';
-let url = 'https://codebeamer.com/cb/tracker/93958';
+let url = 'http://115.178.77.138:8080/cb/tracker/62621';
+let target = '';
 
 console.log('Updating original file..');
 afterload(url,function(body, $) {
     let parsed_content = $('#trackerItems tbody').html();
-    fs.writeFile(original_path, parsed_content, 'utf8', function(error) {
-        if (error) throw error;
+    fs.writeFile(original_path, parsed_content, 'utf8', function(err) {
+        if (err) throw err;
         console.log('Original file created in '+ original_path);
+        create_target();
     });
 });
-create_target();
 
 function compare() {
-    let original = fs.readFile(original_path);
-    let target = fs.readFile(target_path);
+    let original = '';
+    fs.readFileSync(original_path,'utf8', function(err, data) {
+        if(err) throw err;
+        original = data;
+        console.log('hello');
+    });
+    console.log('hello2');
+    fs.readFile(target_path, function(err) {
+        if(err) throw err;
+    });
     if(original == target) {
         console.log('Same file each other, moving target file to original.');
-        fs.copyFile(original_path, target_path, {
-            done: function(error) {
-                if (error) throw error;
-                console.log('File moved.');
-            }
+        /*fs.unlink(original_path, function(err) {
+            if(err) throw err;
         });
-        fs.unlink(original_path);
+        fs.rename(target_path, original_path, function(err) {
+            if(err) throw err;
+        });*/
     } else {
         console.log('File change detected, comparing and message send to mattermost');
     }
@@ -36,9 +44,9 @@ function create_target() {
     console.log('Updating comparison target file..');
     afterload(url,function(body, $) {
         let parsed_content = $('#trackerItems tbody').html();
-        fs.writeFile(target_path, parsed_content, 'utf8', function(error) {
-            if (error) throw error;
-            console.log('Compare file created in'+ target_path);
+        fs.writeFile(target_path, parsed_content, 'utf8', function(err) {
+            if(err) throw err;
+            console.log('Compare file created in '+ target_path);
             compare();
         });
     });
