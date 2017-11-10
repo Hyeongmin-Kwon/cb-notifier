@@ -1,38 +1,46 @@
-let request = require('request');
-let cheerio = require('cheerio');
 let fs = require('fs');
 let afterload = require('after-load');
 
-
+let original_path = './storage/original.html';
+let target_path = './storage/target.html';
 let url = 'https://codebeamer.com/cb/tracker/93958';
 
-afterload(url,function(body, $){
-    let a = $('.ui-layout-center .contentArea #browseTrackerForm .contentWithMargins').html();
-    fs.writeFile('./storage/super_test.html', a, 'utf8', function(error) {
+console.log('Updating original file..');
+afterload(url,function(body, $) {
+    let parsed_content = $('#trackerItems tbody').html();
+    fs.writeFile(original_path, parsed_content, 'utf8', function(error) {
         if (error) throw error;
-        console.log('확인용 HTML 파일 작성');
+        console.log('Original file created in '+ original_path);
     });
 });
+create_target();
 
-request(url, {timeout: 10000}, function (error, response, body) {
-    if(error) throw error;
+function compare() {
+    let original = fs.readFile(original_path);
+    let target = fs.readFile(target_path);
+    if(original == target) {
+        console.log('Same file each other, moving target file to original.');
+        fs.copyFile(original_path, target_path, {
+            done: function(error) {
+                if (error) throw error;
+                console.log('File moved.');
+            }
+        });
+        fs.unlink(original_path);
+    } else {
+        console.log('File change detected, comparing and message send to mattermost');
+    }
+}
 
-    fs.writeFile('./storage/super_test2.html', body, 'utf8', function(error) {
-        if (error) throw error;
-        console.log('확인용 HTML2 파일 작성');
+function create_target() {
+    console.log('Updating comparison target file..');
+    afterload(url,function(body, $) {
+        let parsed_content = $('#trackerItems tbody').html();
+        fs.writeFile(target_path, parsed_content, 'utf8', function(error) {
+            if (error) throw error;
+            console.log('Compare file created in'+ target_path);
+            compare();
+        });
     });
-});
-
-/*
-request(url, function (error, response, body) {
-    if(error) throw error;
-    
-    let $ = cheerio.load(body);
-    let a = $('.ui-layout-center .contentArea #browseTrackerForm .contentWithMargins').html();
-    fs.writeFile('./storage/super_test.html', a, 'utf8', function(error) {
-        if (error) throw error;
-        console.log('확인용 HTML 파일 작성');
-    });
-
-});
-*/
+    setTimeout(create_target,30000);
+}
