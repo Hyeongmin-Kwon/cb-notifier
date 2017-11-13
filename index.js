@@ -1,10 +1,10 @@
-let fs = require('fs');
-let afterload = require('after-load');
-let jsdiff = require('diff');
+const fs = require('fs');
+const afterload = require('after-load');
+const jsdiff = require('diff');
 
-let original_path = './storage/original.html';
-let target_path = './storage/target.html';
-let url = 'http://115.178.77.138:8080/cb/tracker/62621';
+const original_path = './storage/original.html';
+const target_path = './storage/target.html';
+const url = 'http://115.178.77.138:8080/cb/tracker/62621';
 
 console.log('Updating original file..');
 afterload(url,function(body, $) {
@@ -24,32 +24,37 @@ function compare() {
     const target_session = target.substr(target.indexOf('jsessionid=') + 11, 32);
     const original_check = new RegExp(original_session,'gi');
     const target_check = new RegExp(target_session,'gi');
+
     original = original.replace(original_check, '');
     target = target.replace(target_check, '');
 
-    let diff = jsdiff.diffLines(original, target);
+    const diff = jsdiff.diffLines(original, target);
     diff.forEach(function(part){
         if(part.added) {
             let changed_value = part.value;
             console.log('Diff found.');
-            console.log(changed_value);
-            move_file();
+            let check = changed_value.indexOf('textSummaryData');
+            if(check != -1) {
+                //let line_split = changed_value.split('\n');
+                let all_remove = changed_value.replace(/(<([^>]+)>)/gi, '');
+                let splited = all_remove.split('\n');
+                splited = splited.filter(n => n != '');
+                splited =splited.filter(n => n != /(\t){3,5}/);
+                console.log(splited);
+            }
         } else {
             console.log('Not diff found.');
-            move_file();
         }
     });
 }
 
+/*
 function move_file() {
-    fs.unlink(original_path, function(err) {
+    fs.rename(target_path, original_path, function(err) {
         if(err) throw err;
-        fs.rename(target_path, original_path, function(err) {
-            if(err) throw err;
-        });
     });
 }
-
+*/
 
 function create_target() {
     console.log('Updating comparison target file..');
