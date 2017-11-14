@@ -33,19 +33,30 @@ function compare() {
         if(part.added) {
             let changed_value = part.value;
             console.log('Diff found.');
-            let check = changed_value.indexOf('textSummaryData');
-            if(check != -1) {
+            let summary_check = changed_value.indexOf('textSummaryData');
+            let status_check = changed_value.indexOf('issueStatus');
+            console.log(status_check);
+            if(summary_check != -1) {
                 //let line_split = changed_value.split('\n');
-                let all_remove = changed_value.replace(/(<([^>]+)>)/gi, '');
-                let splited = all_remove.split('\n');
-                splited = splited.filter(n => n != '');
-                splited =splited.filter(n => n != /(\t){3,5}/);
-                console.log(splited);
+                //let all_remove = changed_value.replace(/(<([^>]+)>)/gi, '');
+                //let splited = all_remove.split('\n');
+                let data = tag_remove(changed_value);
+                console.log(data);
+            } else if(status_check != -1) {
+                let data = tag_remove(changed_value);
+                console.log(data);
             }
         } else {
             console.log('Not diff found.');
         }
     });
+}
+
+function tag_remove(data) {
+    let removed_data = data.replace(/(<([^>]+)>)/gi, '');
+    let splited_data = removed_data.split('\n');
+    splited_data = splited_data.filter(n => n != '');
+    return splited_data;
 }
 
 /*
